@@ -22,6 +22,11 @@ function bee:update()
  if (btn(b.r)) self.x+=self.s
  if (btn(b.u)) self.y-=self.s
  if (btn(b.d)) self.y+=self.s
+ 
+ for d in all{'x', 'y'} do
+  self[d]=min(self[d],120)
+  self[d]=max(self[d],0)
+ end
 end
 
 function _draw()
