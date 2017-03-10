@@ -84,9 +84,17 @@ function flower()
 end
 
 flowers = {}
+fog = {}
 function _init()
  for i=0,rnd(7)+7 do
   add(flowers, flower())
+ end
+
+ for x=0,32 do
+  fog[x] = {}
+  for y=0,32 do
+   fog[x][y] = abs(x-15.5)^2+abs(y-15.5)^2 > 15
+  end
  end
 end
 
@@ -100,10 +108,24 @@ function _draw()
  palt(12, true)
  spr(4, 56,56, 2, 2)
  palt()
+
+ -- draw fog
+ for x, row in pairs(fog) do
+  for y, val in pairs(row) do
+   if (val) rectfill(x*4,y*4,x*4+4,y*4+4, 3)
+  end
+ end
 end
 
 function _update60()
  bee:update()
+ local cx = flr(bee.x/4)+1
+ local cy = flr(bee.y/4)+1
+ for x=-2,2 do
+  for y=-2,2 do
+   if (x^2+y^2 < 6 and fog[cx+x] != nil) fog[cx+x][cy+y] = false
+  end
+ end
 end
 
 
