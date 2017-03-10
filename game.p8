@@ -8,7 +8,7 @@ b = {
 bee = {
  x=60,y=60,
  vel={x=0,y=0},
- s=2,
+ s=1,
  sprites={
   v=1,d=2,h=3
  },
@@ -41,12 +41,19 @@ function bee:draw()
  palt()
 end
 
+sqrt2 = sqrt(2)
+
 function bee:update()
  self.vel={x=0,y=0}
  if (btn(b.l)) self.vel.x-=self.s
  if (btn(b.r)) self.vel.x+=self.s
  if (btn(b.u)) self.vel.y-=self.s
  if (btn(b.d)) self.vel.y+=self.s
+
+ if self.vel.x !=0 and self.vel.y != 0 then
+  self.vel.x/=sqrt2
+  self.vel.y/=sqrt2
+ end
 
  self.x+=self.vel.x
  self.y+=self.vel.y
@@ -396,4 +403,3 @@ __music__
 00 41424344
 00 41424344
 00 41424344
-
