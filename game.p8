@@ -4,6 +4,13 @@ __lua__
 flower_count=20
 use_fog=true
 
+function contains(t, s)
+ for v in all(t) do
+  if (s==v) return true
+ end
+ return false
+end
+
 b = {
  u=2, d=3, l=0, r=1
 }
@@ -89,13 +96,15 @@ function flower(x,y)
   pal(7,self.c)
   spr(self.s, self.x, self.y)
   pal()
-  if self.visited>0 then
+  if last_flower==self then
    circ(self.x+3.5,self.y+3, 5, 10)
   end
  end
  return proto
 end
 
+last_flower = nil
+known_flowers = {}
 flowers = {}
 fog = {}
 function _init()
@@ -132,10 +141,16 @@ end
 
 function _draw()
  rectfill(0,0,127,127,11)
+ 
+ for flower in all(known_flowers) do
+  line(64,64, flower.x+3,flower.y+4, 10)
+ end
+
  for flower in all(flowers) do
   flower:draw()
  end
  bee:draw()
+ -- draw beehive
  palt(0, false)
  palt(12, true)
  spr(4, 56,56, 2, 2)
@@ -145,9 +160,10 @@ function _draw()
  if (use_fog) draw_fog()
 end
 
-function overlaps(a, b)
+function overlaps(a, b, thresh)
+ if (thresh==nil) thresh=16
  local d=(a.x-b.x)^2+(a.y-b.y)^2
- return d<16
+ return d<thresh
 end
 
 function _update60()
@@ -163,7 +179,15 @@ function _update60()
  for flower in all(flowers) do
   if overlaps(bee, flower) then
    flower.visited+=1
+   if not contains(known_flowers, flower) then
+    last_flower = flower
+   end
   end
+ end
+
+ if overlaps(bee, {x=60,y=60}, 64) and last_flower!=nil then
+  add(known_flowers, last_flower)
+  last_flower = nil
  end
 end
 
