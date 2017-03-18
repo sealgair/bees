@@ -2,6 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 flower_count=20
+use_fog=true
 
 
 b = {
@@ -77,10 +78,10 @@ function flower_coord()
  return c*8
 end
 
-function flower()
+function flower(x,y)
  local proto = {
-  x=flower_coord(),
-  y=flower_coord(),
+  x=x,
+  y=y,
   s=rnd_choice({11,12,13,14,15}),
   c=rnd_choice({7,8,9,10,12,13,14,2}),
  }
@@ -95,14 +96,33 @@ end
 flowers = {}
 fog = {}
 function _init()
- for i=0,flower_count do
-  add(flowers, flower())
+ local choices = {}
+ for x=0,16 do
+  for y=0,16 do
+   if (x-7.5)^2+(y-7.5)^2 > 8 then
+    add(choices, {x=x*8,y=y*8})
+   end
+  end
+ end
+
+ while #flowers<flower_count and #choices>0 do
+  local c=rnd_choice(choices)
+  add(flowers, flower(c.x, c.y))
+  del(choices, c)
  end
 
  for x=0,32 do
   fog[x] = {}
   for y=0,32 do
-   fog[x][y] = abs(x-15.5)^2+abs(y-15.5)^2 > 15
+   fog[x][y] = (x-15.5)^2+(y-15.5)^2 > 15
+  end
+ end
+end
+
+function draw_fog()
+ for x, row in pairs(fog) do
+  for y, val in pairs(row) do
+   if (val) spr(63, x*4-2, y*4-2)
   end
  end
 end
@@ -119,11 +139,7 @@ function _draw()
  palt()
 
  -- draw fog
- for x, row in pairs(fog) do
-  for y, val in pairs(row) do
-   if (val) spr(63, x*4-2, y*4-2)
-  end
- end
+ if (use_fog) draw_fog()
 end
 
 function _update60()
