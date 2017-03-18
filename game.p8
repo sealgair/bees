@@ -1,6 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
+flower_count=20
+
+
 b = {
  u=2, d=3, l=0, r=1
 }
@@ -68,10 +71,16 @@ function rnd_choice(l)
  return l[flr(rnd(#l))+1]
 end
 
+function flower_coord()
+ local c=flr(rnd(12))
+ if (c > 5) c+=4
+ return c*8
+end
+
 function flower()
  local proto = {
-  x=flr(rnd(16))*8,
-  y=flr(rnd(16))*8,
+  x=flower_coord(),
+  y=flower_coord(),
   s=rnd_choice({11,12,13,14,15}),
   c=rnd_choice({7,8,9,10,12,13,14,2}),
  }
@@ -86,7 +95,7 @@ end
 flowers = {}
 fog = {}
 function _init()
- for i=0,rnd(7)+7 do
+ for i=0,flower_count do
   add(flowers, flower())
  end
 
@@ -425,4 +434,3 @@ __music__
 00 41424344
 00 41424344
 00 41424344
-
