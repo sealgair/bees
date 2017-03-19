@@ -4,6 +4,12 @@ __lua__
 flower_count=20
 use_fog=true
 
+buttons={
+ u=2, d=3, l=0, r=1
+}
+
+sqrt2=sqrt(2)
+
 function contains(t, s)
  for v in all(t) do
   if (s==v) return true
@@ -11,11 +17,23 @@ function contains(t, s)
  return false
 end
 
-b = {
- u=2, d=3, l=0, r=1
-}
+function rnd_choice(l)
+ return l[flr(rnd(#l))+1]
+end
 
-bee = {
+function sign(n)
+ return n/abs(n)
+end
+
+function copy(t)
+ local c={}
+ for v in all(t) do
+  add(c,v)
+ end
+ return c
+end
+
+bee={
  x=60,y=60,
  vel={x=0,y=0},
  s=1,
@@ -51,14 +69,12 @@ function bee:draw()
  palt()
 end
 
-sqrt2 = sqrt(2)
-
 function bee:update()
  self.vel={x=0,y=0}
- if (btn(b.l)) self.vel.x-=self.s
- if (btn(b.r)) self.vel.x+=self.s
- if (btn(b.u)) self.vel.y-=self.s
- if (btn(b.d)) self.vel.y+=self.s
+ if (btn(buttons.l)) self.vel.x-=self.s
+ if (btn(buttons.r)) self.vel.x+=self.s
+ if (btn(buttons.u)) self.vel.y-=self.s
+ if (btn(buttons.d)) self.vel.y+=self.s
 
  if self.vel.x !=0 and self.vel.y != 0 then
   self.vel.x/=sqrt2
@@ -74,10 +90,6 @@ function bee:update()
  end
 end
 
-function rnd_choice(l)
- return l[flr(rnd(#l))+1]
-end
-
 function flower_coord()
  local c=flr(rnd(12))
  if (c > 5) c+=4
@@ -89,6 +101,7 @@ function worker(t)
  local h=63.5
  local proto={
   x=h, y=h, t=t,
+  s=1,
   sprites={
    v=6,d=7,h=8
   },
@@ -104,13 +117,21 @@ function worker(t)
  end
 
  function proto:update()
-  local dx=self.x-h
-  local dy=self.y-h
-  local d=sqrt(dx^2+dy^2)
-  self.t=atan2(dx, dy)
-  self.t+=0.01
-  self.x=cos(self.t)*d+h
-  self.y=sin(self.t)*d+h
+  if self.target then
+   local dx=self.target.x-self.x
+   local dy=self.target.y-self.y
+   local d=sqrt(dx^2+dy^2)
+   if (abs(dx)>1) self.x+=dx/d
+   if (abs(dy)>1) self.y+=dy/d
+  else
+   local dx=self.x-h
+   local dy=self.y-h
+   local d=sqrt(dx^2+dy^2)
+   self.t=atan2(dx, dy)
+   self.t+=0.01
+   self.x=cos(self.t)*d+h
+   self.y=sin(self.t)*d+h
+  end
  end
 
  return proto
@@ -226,8 +247,18 @@ function _update60()
   end
  end
 
+ local targets=copy(known_flowers)
  for worker in all(workers) do
   worker:update()
+  if worker.target != nil then
+   del(targets, worker.target)
+  end
+ end
+ for worker in all(workers) do
+  if #targets>0 and worker.target == nil then
+   worker.target=rnd_choice(targets)
+   del(targets, worker.target)
+  end
  end
 
  if overlaps(bee, {x=60,y=60}, 64) and last_flower!=nil then
