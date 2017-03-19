@@ -123,6 +123,13 @@ function worker(t)
    local d=sqrt(dx^2+dy^2)
    if (abs(dx)>1) self.x+=dx/d
    if (abs(dy)>1) self.y+=dy/d
+   if abs(dx)+abs(dy)<2 then
+    if self.target.flower then
+     self.target = {x=h,y=h}
+    else
+     self.target = nil
+    end
+   end
   else
    local dx=self.x-h
    local dy=self.y-h
@@ -143,14 +150,12 @@ function flower(x,y)
   s=rnd_choice({11,12,13,14,15}),
   c=rnd_choice({7,8,9,10,12,13,14,2}),
   visited=0,
+  flower=true,
  }
  function proto:draw()
   pal(7,self.c)
   spr(self.s, self.x, self.y)
   pal()
-  if last_flower==self then
-   circ(self.x+3.5,self.y+3, 5, 10)
-  end
  end
  return proto
 end
@@ -197,10 +202,6 @@ end
 
 function _draw()
  rectfill(0,0,127,127,11)
-
- for flower in all(known_flowers) do
-  line(64,64, flower.x+3,flower.y+4, 10)
- end
 
  for flower in all(flowers) do
   flower:draw()
