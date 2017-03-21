@@ -27,6 +27,14 @@ function sign(n)
  return n/abs(n)
 end
 
+function bint(b)
+ if b then
+  return 1
+ else
+  return 0
+ end
+end
+
 function copy(t)
  local c={}
  for v in all(t) do
@@ -109,18 +117,35 @@ function worker(t)
   sprites={
    v=6,d=7,h=8
   },
+  wing=false,
  }
  proto.x+=cos(proto.t)*12
  proto.y+=sin(proto.t)*12
 
  function proto:draw()
+  local s=6
+  local dir=flr(self.dir*8+0.5)
+  local flipx=dir>4
+  local flipy=dir>2 and dir<6
+  if dir%2==1 then
+   s=7
+  elseif dir==2 or dir==6 then
+   s=8
+  end
+
+  if not self.wing then
+   s+=16
+  end
+  self.wing=not self.wing
   palt(0, false)
   palt(12, true)
-  spr(6, self.x, self.y)
+  spr(s, self.x-bint(flipx)*4, self.y-bint(flipy)*4, 1,1, flipx, flipy)
   palt()
  end
 
  function proto:update()
+  local ox=self.x
+  local oy=self.y
   if self.target then
    local dx=self.target.x-self.x
    local dy=self.target.y-self.y
@@ -143,6 +168,7 @@ function worker(t)
    self.x=cos(self.t)*d+h
    self.y=sin(self.t)*d+h
   end
+  self.dir=atan2(oy-self.y, ox-self.x)
  end
 
  return proto
