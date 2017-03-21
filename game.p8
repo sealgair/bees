@@ -147,14 +147,14 @@ function worker(t)
   local ox=self.x
   local oy=self.y
   if self.target then
-   local dx=self.target.x-self.x
-   local dy=self.target.y-self.y
+   local dx=self.target.x-self.x+2
+   local dy=self.target.y-self.y+2
    local d=sqrt(dx^2+dy^2)
    if (abs(dx)>1) self.x+=dx/d
    if (abs(dy)>1) self.y+=dy/d
    if abs(dx)+abs(dy)<2 then
     if self.target.flower then
-     self.target = {x=h,y=h}
+     self.target = {x=h-2,y=h-2}
     else
      self.target = nil
     end
