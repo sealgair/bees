@@ -1,8 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
+bee_color=10
 flower_count=20
 use_fog=true
+draw_last=false
 
 buttons={
  u=2, d=3, l=0, r=1
@@ -49,6 +51,7 @@ bee.sprite=bee.sprites.v
 function bee:draw()
  palt(0, false)
  palt(12, true)
+ pal(10, bee_color)
  if self.vel.x!=0 and self.vel.y!=0 then
   self.sprite = self.sprites.d
  elseif self.vel.x!=0 then
@@ -67,6 +70,7 @@ function bee:draw()
  end
  self.wing=not self.wing
  palt()
+ pal()
 end
 
 function bee:update()
@@ -156,6 +160,9 @@ function flower(x,y)
   pal(7,self.c)
   spr(self.s, self.x, self.y)
   pal()
+  if draw_last and last_flower==self then
+   circ(self.x+3.5,self.y+3, 5, 10)
+  end
  end
  return proto
 end
@@ -224,7 +231,7 @@ function _draw()
 end
 
 function overlaps(a, b, thresh)
- if (thresh==nil) thresh=16
+ if (thresh==nil) thresh=18
  local d=(a.x-b.x)^2+(a.y-b.y)^2
  return d<thresh
 end
