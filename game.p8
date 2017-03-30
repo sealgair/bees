@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
-bee_color=10
+bee_colors={10,0}
 flower_count=20
 use_fog=true
 draw_last=false
@@ -59,7 +59,8 @@ bee.sprite=bee.sprites.v
 function bee:draw()
  palt(0, false)
  palt(12, true)
- pal(10, bee_color)
+ pal(10, bee_colors[1])
+ pal(0, bee_colors[2])
  if self.vel.x!=0 and self.vel.y!=0 then
   self.sprite = self.sprites.d
  elseif self.vel.x!=0 then
