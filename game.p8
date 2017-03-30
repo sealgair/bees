@@ -1,7 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
-bee_colors={10,0}
+bee_colors={
+ {10,0},
+ {9,4},
+}
 flower_count=20
 use_fog=true
 draw_last=false
@@ -43,64 +46,68 @@ function copy(t)
  return c
 end
 
-bee={
- x=60,y=60,
- vel={x=0,y=0},
- s=1,
- sprites={
-  v=1,d=2,h=3
- },
- fx=false,
- fy=false,
- wing=false,
-}
-bee.sprite=bee.sprites.v
+function make_bee(p)
+ proto={
+  p=p,
+  x=60,y=60,
+  vel={x=0,y=0},
+  s=1,
+  sprites={
+   v=1,d=2,h=3
+  },
+  fx=false,
+  fy=false,
+  wing=false,
+ }
+ proto.sprite=proto.sprites.v
 
-function bee:draw()
- palt(0, false)
- palt(12, true)
- pal(10, bee_colors[1])
- pal(0, bee_colors[2])
- if self.vel.x!=0 and self.vel.y!=0 then
-  self.sprite = self.sprites.d
- elseif self.vel.x!=0 then
-  self.sprite = self.sprites.h
- elseif self.vel.y!=0 then
-  self.sprite = self.sprites.v
+ function proto:draw()
+  palt(0, false)
+  palt(12, true)
+  pal(10, bee_colors[self.p][1])
+  pal(0, bee_colors[self.p][2])
+  if self.vel.x!=0 and self.vel.y!=0 then
+   self.sprite = self.sprites.d
+  elseif self.vel.x!=0 then
+   self.sprite = self.sprites.h
+  elseif self.vel.y!=0 then
+   self.sprite = self.sprites.v
+  end
+
+  if (self.vel.x!=0) self.fx=self.vel.x<0
+  if (self.vel.y!=0) self.fy=self.vel.y>0
+
+  if self.wing then
+   spr(self.sprite, self.x, self.y, 1, 1, self.fx, self.fy)
+  else
+   spr(self.sprite+16, self.x, self.y, 1, 1, self.fx, self.fy)
+  end
+  self.wing=not self.wing
+  palt()
+  pal()
  end
 
- if (self.vel.x!=0) self.fx=self.vel.x<0
- if (self.vel.y!=0) self.fy=self.vel.y>0
+ function proto:update()
+  self.vel={x=0,y=0}
+  if (btn(buttons.l, self.p-1)) self.vel.x-=self.s
+  if (btn(buttons.r, self.p-1)) self.vel.x+=self.s
+  if (btn(buttons.u, self.p-1)) self.vel.y-=self.s
+  if (btn(buttons.d, self.p-1)) self.vel.y+=self.s
 
- if self.wing then
-  spr(self.sprite, self.x, self.y, 1, 1, self.fx, self.fy)
- else
-  spr(self.sprite+16, self.x, self.y, 1, 1, self.fx, self.fy)
+  if self.vel.x !=0 and self.vel.y != 0 then
+   self.vel.x/=sqrt2
+   self.vel.y/=sqrt2
+  end
+
+  self.x+=self.vel.x
+  self.y+=self.vel.y
+
+  for d in all{'x', 'y'} do
+   self[d]=min(self[d],120)
+   self[d]=max(self[d],0)
+  end
  end
- self.wing=not self.wing
- palt()
- pal()
-end
-
-function bee:update()
- self.vel={x=0,y=0}
- if (btn(buttons.l)) self.vel.x-=self.s
- if (btn(buttons.r)) self.vel.x+=self.s
- if (btn(buttons.u)) self.vel.y-=self.s
- if (btn(buttons.d)) self.vel.y+=self.s
-
- if self.vel.x !=0 and self.vel.y != 0 then
-  self.vel.x/=sqrt2
-  self.vel.y/=sqrt2
- end
-
- self.x+=self.vel.x
- self.y+=self.vel.y
-
- for d in all{'x', 'y'} do
-  self[d]=min(self[d],120)
-  self[d]=max(self[d],0)
- end
+ return proto
 end
 
 function flower_coord()
@@ -198,6 +205,7 @@ last_flower = nil
 known_flowers = {}
 flowers = {}
 fog = {}
+bees = {}
 function _init()
  local choices = {}
  for x=0,16 do
@@ -207,6 +215,9 @@ function _init()
    end
   end
  end
+
+ add(bees, make_bee(1))
+ add(bees, make_bee(2))
 
  while #flowers<flower_count and #choices>0 do
   local c=rnd_choice(choices)
@@ -245,7 +256,9 @@ function _draw()
   worker:draw()
  end
 
- bee:draw()
+ for bee in all(bees) do
+  bee:draw()
+ end
 
  -- draw beehive
  palt(0, false)
@@ -264,20 +277,22 @@ function overlaps(a, b, thresh)
 end
 
 function _update60()
- bee:update()
- local cx = flr(bee.x/4)+1
- local cy = flr(bee.y/4)+1
- for x=-2,2 do
-  for y=-2,2 do
-   if (x^2+y^2 < 6 and fog[cx+x] != nil) fog[cx+x][cy+y] = false
+ for bee in all(bees) do
+  bee:update()
+  local cx = flr(bee.x/4)+1
+  local cy = flr(bee.y/4)+1
+  for x=-2,2 do
+   for y=-2,2 do
+    if (x^2+y^2 < 6 and fog[cx+x] != nil) fog[cx+x][cy+y] = false
+   end
   end
- end
 
- for flower in all(flowers) do
-  if overlaps(bee, flower) then
-   flower.visited+=1
-   if not contains(known_flowers, flower) then
-    last_flower = flower
+  for flower in all(flowers) do
+   if overlaps(bee, flower) then
+    flower.visited+=1
+    if not contains(known_flowers, flower) then
+     last_flower = flower
+    end
    end
   end
  end
@@ -296,9 +311,11 @@ function _update60()
   end
  end
 
- if overlaps(bee, {x=60,y=60}, 64) and last_flower!=nil then
-  add(known_flowers, last_flower)
-  last_flower = nil
+ for bee in all(bees) do
+  if overlaps(bee, {x=60,y=60}, 64) and last_flower!=nil then
+   add(known_flowers, last_flower)
+   last_flower = nil
+  end
  end
 end
 
